@@ -1,0 +1,32 @@
+library(shiny)
+
+
+# Define UI for application that plots random distributions
+shinyUI(pageWithSidebar(
+
+  # Application title
+  headerPanel("Cours Finance: TP1"),
+
+  # Sidebar with a slider input for number of observations
+  sidebarPanel(
+    numericInput("cap","capital :",40000),
+    numericInput("maturite","maturité :",84),
+    numericInput("periode","periode :", 12),
+    numericInput("fraisfixes","frais fixes :", 120),
+
+    sliderInput("taux",
+                "Taux :",
+                min = 0.001,
+                max = 1,
+                value = 0.02,
+                step= 0.001)
+  ),
+
+  # Show a plot of the generated distribution
+  mainPanel(
+    #    textOutput("vie"),
+    tableOutput("vie1"),
+    plotOutput("vie2")
+    #   plotOutput("distPlot")
+  )
+))
