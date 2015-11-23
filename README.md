@@ -1,2 +1,2 @@
 # rate-products
-financial Mathematics
+financial Mathematics programmed in R
