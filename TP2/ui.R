@@ -9,44 +9,30 @@ shinyUI(pageWithSidebar(
 
   # Sidebar with a slider input for number of observations
   sidebarPanel(
-    numericInput("cap","capital :",40000),
-    numericInput("periode","periode :", 1),
-    numericInput("fraisfixes","frais fixes :", 120),
-    numericInput("CRD","CRD :", 100),
-    numericInput("flux d'assurance","flux d'assurance :", 12),
+    numericInput("cap","capital :",100000),
+    numericInput("debut","Debut :",1),
+    numericInput("periode","periode :", 3),
     numericInput("taux","taux :", 0.01),
     
 
     sliderInput("taux1",
                 "Taux 1:",
                 min = 0.001,
-                max = 1,
-                value = 0.02,
+                max = 0.5,
+                value = 0.01,
                 step= 0.001),
     sliderInput("taux2",
                 "Taux 2:",
                 min = 0.001,
-                max = 1,
+                max = 0.5,
                 value = 0.02,
                 step= 0.001),
     sliderInput("taux3",
               "Taux 3:",
               min = 0.001,
-              max = 1,
+              max = 0.5,
               value = 0.02,
-              step= 0.001),
-    sliderInput("taux4",
-            "Taux 4:",
-            min = 0.001,
-            max = 1,
-            value = 0.02,
-            step= 0.001),
-  sliderInput("taux5",
-            "Taux 5 :",
-            min = 0.001,
-            max = 1,
-            value = 0.02,
-            step= 0.001)
+              step= 0.001)
   ),
   
   
