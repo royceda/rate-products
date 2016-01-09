@@ -4,115 +4,6 @@ numextractall <- function(string){
   as.numeric(unlist(regmatches(string,gregexpr("[[:digit:]]+\\.*[[:digit:]]*",string)), use.names=FALSE))
 }
 
-#calcul des annuités
-anu <- function(cap, taux, maturite, periode)
-{
-  tmp = cap * taux
-  anu = tmp / (1-(1+taux)^(-maturite))
-  return(anu)
-}
-
-#flux ????
-actuf <- function(cap, taux, maturite, periode)
-{
-  return(cap*taux);
-}
-
-#On regroupe dans une liste
-#1 taux
-#2 cap
-#3 matu
-#4 flux: supposés constant
-echinfine<-function(tx, matu, cap)
-{
-  #on suppose des flux constants
-  flux = cap*tx;
-  obli = c(tx, cap, matu, flux);
-  return(obli);
-}
-
-#Formule de Irving Fisher
-prixactu<-function(obli, taux){
-  tx   = obli[1];
-  cap  = obli[2];
-  matu = obli[3];
-  flux = obli[4];
-  tmp  = 0;
-
-  for(i in (1:matu)){
-    tmp = tmp + flux/(1 + taux)^i;
-  }
-  tmp = tmp + cap/(1 + taux)^matu
-  return(tmp);
-}
-
-
-# D = V'(r) / V(r);
-#modif: (obli, taux)
-duration<-function(obli, taux){
-  tx   = obli[1];
-  cap  = obli[2];
-  matu = obli[3];
-  flux = obli[4];
-
-  tmp1 = 0;
-  tmp2 = 0;
-
-  for(i in (1:matu)){
-    tmp1 = tmp1 + flux*i/(1+taux)^i;
-  }
-
-  for(i in (1:matu)){
-    tmp2 = tmp2 + flux/(1+taux)^i;
-  }
-
-  return(-tmp1/tmp2);
-}
-
-
-#Avec duration
-#S = - D/(1+r)
-sensibilite<-function(obli,taux)
-{
-  tmp = -duration(obli, taux)/(1 + taux);
-  return(tmp);
-}
-
-
-sensibiliter<-function(obli, taux)
-{
-
-}
-
-
-
-#C = V"(r) / V(r)
-#mesure le risque de taux
-convexite<-function(obli, taux){
-  tx   = obli[1];
-  cap  = obli[2];
-  matu = obli[3];
-  flux = obli[4];
-
-  tmp1 = 0;
-  tmp2 = 0;
-
-  for(i in (1:matu)){
-    tmp1 = tmp1 + flux*i*(1+i)/(1+taux)^(i+2);
-  }
-  for(i in (1:matu)){
-    tmp2 = tmp2 + flux/(1+taux)^i;
-  }
-
-  return(tmp1/tmp2);
-}
-
-
-
-convexiter<-function(obl, taux){
-
-}
-
 
 ech <- function(cap,taux,maturite,periode,fraisfixes)
 {
@@ -137,6 +28,124 @@ ech <- function(cap,taux,maturite,periode,fraisfixes)
  res = data.frame(res);
 return(res)
 }
+
+
+#####################################################
+##################### TP3 ###########################
+#############################################"#######"
+
+
+#definition of ech
+ech<-function(tx, coup, matu, cap){
+    obli = list(tx, cap, matu, cap*coup)
+    return(obli);
+}
+
+#cover portfolio
+cover <- function(obli1, obli2, obli3){
+    tmp = list(obli1, obli2, obli3);
+    return(tmp);
+}
+
+#Fisher's formula
+value <- function(obli){
+    tx = obli[[1]];
+    cap = obli[[2]];
+    matu = obli[[3]];
+    flux = obli[[4]];
+
+    tmp = 0;
+
+    for (i in (1:matu)){
+        tmp = tmp + flux/(1+tx)^i;
+    }
+    tmp = tmp + cap/(1+tx)^matu;
+    return(tmp);
+}
+
+#matrix b
+values<- function(cov){
+    tmp = list(value(cov[[1]]), value(cov[[2]]), value(cov[[3]]));
+    vect = matrix(unlist(tmp), nrow=3);
+    return(vect);
+}
+
+
+
+duration <- function(obli){
+    tx = obli[[1]];
+    cap = obli[[2]];
+    matu = obli[[3]];
+    flux = obli[[4]];
+
+    tmp = 0;
+      suiv = list();
+    T = matu-1;
+
+     for (i in (1:T)){
+         a = flux*i/(1+tx)^(i);
+        tmp = tmp + a;
+         suiv = append(suiv, a);
+    }
+
+    a = cap*matu/(1+tx)^matu;
+    tmp = tmp + a;
+    suiv = append(suiv, a);
+    res = tmp/value(obli);
+
+    return(res);
+}
+
+sensibility <- function(obli){
+    tx = obli[[1]];
+    tmp = -duration(obli)/(1+tx);
+    return(tmp);
+}
+
+
+
+#C = V"(r) / V(r)
+#mesure le risque de taux
+convexity <- function(obli){
+     tx = obli[[1]];
+    cap = obli[[2]];
+    matu = obli[[3]];
+    flux = obli[[4]];
+    tmp = 0;
+
+    suiv = list();
+     for (i in (1:matu)){
+        tmp = tmp + flux*i*(1+i)/((1+tx)^(i));
+    }
+    res = tmp/value(obli);
+    return(res);
+}
+
+
+
+
+mat <- function(couv){
+    n = length(cov);
+    tmp = list();
+
+    for(i in (1:n)){
+        v = value(couv[[i]]);
+        d = duration(couv[[i]])*v;
+        c = convexity(couv[[i]])*v;
+        tmp = append(tmp,list(v, d, c));
+    }
+
+    mat = matrix(unlist(tmp), ncol=3);
+    return(mat);
+}
+
+
+lambda <- function(couv){
+    A = mat(couv);
+    b = values(couv);
+    return(solve(A) %*% b);
+}
+
 
 
 shinyServer(function(input, output) {
