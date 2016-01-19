@@ -37,9 +37,10 @@ shinyUI(fluidPage(
                 value = 0.02,
                 step= 0.001)
   ),
-  column(
+  mainPanel(
     4,
-     tableOutput("vie")
- #   plotOutput("distPlot")
+    textOutput("vie"),
+     tableOutput("vie1"),
+    tableOutput("lamb")
   )
 )))

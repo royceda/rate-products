@@ -126,65 +126,50 @@ convexity <- function(obli){
 
 mat <- function(couv){
     n = length(cov);
-    tmp = list();
 
-    for(i in (1:n)){
+    Mat = c(value(couv[[1]]), duration(couv[[1]])*v, convexity(couv[[1]])*v) ;
+
+    for(i in (2:n)){
         v = value(couv[[i]]);
         d = duration(couv[[i]])*v;
         c = convexity(couv[[i]])*v;
-        tmp = append(tmp,list(v, d, c));
+        Mat = rbind(Mat, c(v, d, c));
     }
 
-    mat = matrix(unlist(tmp), ncol=3);
-    return(mat);
+   # mat = matrix(unlist(tmp), ncol=3);
+    return(t(Mat));
 }
 
 
 lambda <- function(couv){
     A = mat(couv);
     b = values(couv);
-    return(solve(A) %*% b);
+    return(try(solve(A,b, tol=1e-58)));
 }
 
 
-
+#A modifier
 shinyServer(function(input, output) {
-   output$vie<- renderTable({
-     passif    = list("flux"=numextractall(input$flp),"dates"=numextractall(input$dp))
-     tauxactif = numextractall(input$cbtp)
-     matactif  = numextractall(input$matp)
-     cpriactif = c()
+  shinyServer(function(input, output) {
+  output$vie <- renderText({
+    anu(input$cap, input$taux1, input$maturite, input$periode);
+    })
 
-     for ( k in 1:length(tauxactif)){k
-         obp       = echinfine(tauxactif[k], matactif[k], 100.)
-         cpriactif = cbind(cpriactif,c(prixactu(obp, input$taux), sensibilite(obp, input$taux), convexite(obp, input$taux)))
-     }
-     cprixpassif = c(prixactu(passif, input$taux), sensibilite(passif, input$taux), convexite(passif, input$taux))
+  #for test
+  r = 0.03;
+  coupon = 0.05;
 
-     #Linear Program
-     print(cprixpassif);
-     c_    = c(rep(0,length(tauxactif))); #Matrice economique
-     signs = c(rep('=', 3), rep('>=', length(tauxactif))); #signe des contraintes
-     D     = diag(length(tauxactif)); #matrice des contraintes
-     res   = lpSolve::lp('min', c_, rbind(cpriactif, D), signs, c(cprixpassif, rep(10, length(tauxactif)))) #matrice des lambdas
-     print(res);
+  e1 = ech(r, coupon, 5, 100);
+  e2 = ech(r, coupon, 3, 200);
+  e3 = ech(r, coupon, 5, 150);
+  e1;
 
-     #calcul d'actif
-     cpriactif1 = c()
-     for ( k in 1:length(tauxactif)){k
-       obp = echinfine(tauxactif[k],matactif[k],100.)
-       cpriactif1 =   cbind(cpriactif1,c(prixactu(obp, input$taux+input$vtaux), sensibilite(obp,input$taux+input$vtaux), convexite(obp, input$taux+input$vtaux)))
-     }
-     vecte = cpriactif1%*%res$solution
+  value(e1)
 
-      F = rbind(c(cpriactif%*%res$solution, rep("", length(tauxactif)-3)), res$solution, c(prixactu(passif,input$taux+input$vtaux)-vecte[1], rep("", length(tauxactif)-1)));
-      rownames(F) <- c("passif"," Lambda", "ecart");
-
-     return(F);
-#     vectb=prixactu(obp,input$taux+input$vtaux)-matrix(c(prixactu(oba1,input$taux+input$vtaux),prixactu(oba2,input$taux+input$vtaux)),ncol=2)%*%lam
-
-#     ecart=c(vecte,vectb,0)
-#     A=cbind(vect0,vect1,vect2,vect3,resc,res,-ecart)
+  cov = cover(e1, e2, e3);
+  output$vie <- renderTable({ "couverture";});
+    output$vie1<- renderTable({
+      mat(cov);
+      })
   })
-
 })
