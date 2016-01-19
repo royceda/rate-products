@@ -11,12 +11,12 @@ shinyUI(pageWithSidebar(
   sidebarPanel(
     numericInput("cap","capital :",100000),
     numericInput("debut","Debut :",1),
-    numericInput("periode","periode :", 3),
+    numericInput("periode","periode :", 2),
     numericInput("taux","taux :", 0.01),
     
 
     sliderInput("taux1",
-                "Taux 1:",
+                "taux1",
                 min = 0.001,
                 max = 0.5,
                 value = 0.01,
@@ -39,9 +39,9 @@ shinyUI(pageWithSidebar(
 
   # Show a plot of the generated distribution
   mainPanel(
-    #    textOutput("vie"),
+    #textOutput("vie"),
     tableOutput("vie1"),
-    plotOutput("vie2")
+    #plotOutput("vie2")
     #   plotOutput("distPlot")
   )
 ))
