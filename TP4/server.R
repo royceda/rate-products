@@ -1,5 +1,5 @@
 library(shiny);
-library()
+library(lpSolveAPI);
 
 
 numextractall <- function(string){
@@ -41,6 +41,11 @@ return(res)
 ech<-function(tx, coup, matu, cap){
     obli = list(tx, cap, matu, cap*coup)
     return(obli);
+}
+
+ech1<-function(tx, coup, matu, flx){
+  obli = list(tx, cap, matu, cap*coup);
+  return(obli);
 }
 
 #cover portfolio
@@ -154,7 +159,6 @@ matCon <- function(couv){
     n = length(cov);
 
     tmp = list();
-
     for(i in (1:n)){
         v = value(couv[[i]]);
         d = duration(couv[[i]])*v;
@@ -207,8 +211,31 @@ LP <- function(cov){
     f.rhs <- c(0, 0, 0);
 
 
-    #lp ("max", f.obj, f.con, f.dir, f.rhs);
-    return (f.dir);
+    res = lp("min", f.obj, f.con, f.dir, f.rhs);
+    return (res);
+}
+
+
+
+sol <- function(){
+  passif = list("flux"=numextractall(input$flp),"dates"=numextractall(input$dp))
+  tauxactif = numextractall(input$cbtp)
+  matactif = numextractall(input$matp)
+  cpriactif = c()
+
+  for ( k in 1:length(tauxactif)){k
+    obp=echinfine(tauxactif[k],matactif[k],100.)
+    cpriactif=cbind(cpriactif,c(prixactu(obp,input$taux),sensibilite(obp,input$taux),convexite(obp,input$taux)))
+  }
+
+  cprixpassif=c(prixactu(passif,input$taux),sensibilite(passif,input$taux),convexite(passif,input$taux))
+  print(cprixpassif)
+  c_ = c(rep(0,length(tauxactif)))
+  signs = c(rep('=', 3), rep('>=',length(tauxactif)))
+  D=diag(length(tauxactif))
+
+  res = lpSolve::lp('min',c_,rbind(cpriactif,D), signs, c(cprixpassif,rep(10,length(tauxactif))))
+  print(res)
 }
 
 
@@ -216,46 +243,47 @@ LP <- function(cov){
 
 
 
-
-
+#A modifier
 
 shinyServer(function(input, output) {
-   output$vie<- renderTable({
-     passif    = list("flux"=numextractall(input$flp),"dates"=numextractall(input$dp))
-     tauxactif = numextractall(input$cbtp)
-     matactif  = numextractall(input$matp)
-     cpriactif = c()
+  r = input$vtaux;
+  coupon = input$taux;
 
-     for ( k in 1:length(tauxactif)){k
-         obp       = echinfine(tauxactif[k], matactif[k], 100.)
-         cpriactif = cbind(cpriactif,c(prixactu(obp, input$taux), sensibilite(obp, input$taux), convexite(obp, input$taux)))
-     }
-     cprixpassif = c(prixactu(passif, input$taux), sensibilite(passif, input$taux), convexite(passif, input$taux))
 
-     #Linear Program
-     print(cprixpassif);
-     c_    = c(rep(0,length(tauxactif))); #Matrice economique
-     signs = c(rep('=', 3), rep('>=', length(tauxactif))); #signe des contraintes
-     D     = diag(length(tauxactif)); #matrice des contraintes
-     res   = lpSolve::lp('min', c_, rbind(cpriactif, D), signs, c(cprixpassif, rep(10, length(tauxactif)))) #matrice des lambdas
-     print(res);
+  #DATA
+  r<- inpu$vtaux;
+  coupon <- input$taux;
+  flux <- numextractall(input$flp);
+  dates <- numextractall(input$dp);
+  taux <- numextractall(input$cbtp);
+  matu <- numextractall(input$matp);
 
-     #calcul d'actif
-     cpriactif1 = c()
-     for ( k in 1:length(tauxactif)){k
-       obp = echinfine(tauxactif[k],matactif[k],100.)
-       cpriactif1 =   cbind(cpriactif1,c(prixactu(obp, input$taux+input$vtaux), sensibilite(obp,input$taux+input$vtaux), convexite(obp, input$taux+input$vtaux)))
-     }
-     vecte = cpriactif1%*%res$solution
+  n = length(fulx)
+  cover = list();
+  for(i in  1:n){
+    cover = append(cover, ech1(taux[[i]], coupon, matu[[i]], flux[[i]]));
+  }
 
-      F = rbind(c(cpriactif%*%res$solution, rep("", length(tauxactif)-3)), res$solution, c(prixactu(passif,input$taux+input$vtaux)-vecte[1], rep("", length(tauxactif)-1)));
-      rownames(F) <- c("passif"," Lambda", "ecart");
 
-     return(F);
-#     vectb=prixactu(obp,input$taux+input$vtaux)-matrix(c(prixactu(oba1,input$taux+input$vtaux),prixactu(oba2,input$taux+input$vtaux)),ncol=2)%*%lam
 
-#     ecart=c(vecte,vectb,0)
-#     A=cbind(vect0,vect1,vect2,vect3,resc,res,-ecart)
-  })
+  e1 = ech(r, coupon, 5, 100);
+  e2 = ech(r, coupon, 3, 200);
+  e3 = ech(r, coupon, 5, 150);
+  e4 = ech(r, coupon, 5, 120);
+  e5 = ech(r, coupon, 5, 110);
+  e6 = ech(r, coupon, 5, 100);
 
-})
+  cov = list(e1,e2,e3,e4,e5,e6);
+
+
+
+  output$vie <- renderTable({
+    #anu(input$cap, input$taux1, input$maturite, input$periode);
+    LP(cover);
+    })
+
+    real <- list(0.01, 0.02, 0.03, 0.04, 0.01);
+    #read.table("filename", header = TRUE,  sep = "t",  stringsAsFactors = FALSE)l <- list(input$taux1, input$taux2, input$taux3, input$taux, input$taux );
+
+    output$vie2 <- renderTable({sol()})
+    })
