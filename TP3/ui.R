@@ -37,8 +37,7 @@ shinyUI(fluidPage(
                 value = 0.02,
                 step= 0.001)
   ),
-  mainPanel(
-    4,
+  mainPanel(5,
     textOutput("vie"),
      tableOutput("vie1"),
     tableOutput("lamb")

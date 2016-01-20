@@ -130,9 +130,9 @@ mat <- function(couv){
     Mat = c(value(couv[[1]]), duration(couv[[1]])*v, convexity(couv[[1]])*v) ;
 
     for(i in (2:n)){
-        v = value(couv[[i]]);
-        d = duration(couv[[i]])*v;
-        c = convexity(couv[[i]])*v;
+        v <- value(couv[[i]]);
+        d <- duration(couv[[i]])*v;
+        c <- convexity(couv[[i]])*v;
         Mat = rbind(Mat, c(v, d, c));
     }
 
@@ -149,27 +149,36 @@ lambda <- function(couv){
 
 
 #A modifier
+
 shinyServer(function(input, output) {
-  shinyServer(function(input, output) {
-  output$vie <- renderText({
-    anu(input$cap, input$taux1, input$maturite, input$periode);
-    })
+ # output$vie <- renderText({
+  #  anu(input$cap, input$taux1, input$maturite, input$periode);
+   # })
 
   #for test
-  r = 0.03;
-  coupon = 0.05;
+  #r = 0.03;
+  #coupon = 0.05;
 
+    #DATA
+  #r<- input$vtaux;
+  #coupon <- input$taux;
+ # flux <- numextractall(input$flp);
+  #dates <- numextractall(input$dp);
+  #taux <- numextractall(input$cbtp);
+  #matu <- numextractall(input$matp);
+  
+  r = 0.01;
+  coupon = 0.032;
+  
   e1 = ech(r, coupon, 5, 100);
-  e2 = ech(r, coupon, 3, 200);
-  e3 = ech(r, coupon, 5, 150);
+  e2 = ech(r, coupon, 6, 200);
+  e3 = ech(r, coupon, 7, 150);
   e1;
 
-  value(e1)
+ output$vie = renderPrint({ value(e1) });
 
   cov = cover(e1, e2, e3);
-  output$vie <- renderTable({ "couverture";});
-    output$vie1<- renderTable({
-      mat(cov);
-      })
-  })
+ output$vie1 <- renderTable({ mat(cov) });
+  output$lamb<- renderTable({ lambda(cov) });
 })
+
